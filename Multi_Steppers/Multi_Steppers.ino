@@ -3,6 +3,16 @@
 #include <AccelStepper.h>
 #include <Adafruit_MotorShield.h>
 
+#define dirCW 1
+#define dirCCW -1
+#define fullLayers 22
+//may need to be looked at
+#define linSpeed 22
+#define rotSpeed 200
+#define numberOfTurns 203
+//#define linSteps 4466
+//#define rotSteps 40600
+
 // Create Motor Shield Object
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
@@ -29,19 +39,33 @@ void backwardstep2() {
 AccelStepper linearStepper(forwardstep1, backwardstep1);
 AccelStepper rotateStepper(forwardstep2, backwardstep2);
 
-int dir = -1;
+int dir = dirCCW;
 
+//Function checks whether the linear actuator is in start position
 boolean isAtStart() {
   //BOILER PLATE
   return true;
 }
+
+//Puts the linear actuator to start position
 void calibrate() {
   while(!isAtStart()){
-      linearStepper.setSpeed(11);
+      linearStepper.setSpeed(linSpeed);
       linearStepper.move(-1);
       linearStepper.runSpeedToPosition();
   }
       linearStepper.setCurrentPosition(0);
+}
+
+void windFull() {
+   linearStepper.setSpeed(linSpeed);
+   rotateStepper.setSpeed(rotSpeed);
+   //linearStepper.run();
+    //Moves to either 0 or the numOfTurns
+    while (!linearStepper.runSpeedToPosition()){
+    linearStepper.moveTo((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));}
+    while (!rotateStepper.runSpeedToPosition()){
+    rotateStepper.moveTo(numOfTurns*rotSpeed);}
 }
 void setup()
 {  
@@ -58,22 +82,16 @@ void setup()
   rotateStepper.setAcceleration(10000.0);
 
   //Calibrate to start
-  //calibrate();
+  calibrate();
 }
 
 void loop()
 {
-        linearStepper.setCurrentPosition(0);
-  //for (int layer=0; layer<22; layer++) {
-    linearStepper.setSpeed(dir*22);
-    while (!linearStepper.runSpeedToPosition()){
-    linearStepper.moveTo(-4466);}
-    
-    //rotateStepper.setSpeed(200);
-   // rotateStepper.move(-40600);
-   //linearStepper.run();
-
-
+  for (int layer=1; layer<=fullLayers; layer++) {
+   windFull();
+   dir=dir*-1;
+  }
+  //TODO: Part of a loop logic
 }
 
     
