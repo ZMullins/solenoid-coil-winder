@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <AccelStepper.h>
 #include <Adafruit_MotorShield.h>
-
+#include <MultiStepper.h>
 #define dirCW 1
 #define dirCCW -1
 #define fullLayers 22
@@ -38,6 +38,7 @@ void backwardstep2() {
 // Now we'll wrap the 3 steppers in an AccelStepper object
 AccelStepper linearStepper(forwardstep1, backwardstep1);
 AccelStepper rotateStepper(forwardstep2, backwardstep2);
+MultiStepper steppers;
 
 int dir = dirCCW;
 int state = 0;
@@ -49,14 +50,6 @@ boolean isAtStart() {
   return true;
 }
 
-//Puts the linear actuator to start position
-void calibrate() {
-  
-}
-
-void windFull() {
-  
-}
 void setup()
 {  
   //Start bottom shield
@@ -71,12 +64,15 @@ void setup()
   rotateStepper.setMaxSpeed(600.0);
   rotateStepper.setAcceleration(10000.0);
 
-  //Calibrate to start
-  calibrate();
+
+  steppers.addStepper(linearStepper);
+  steppers.addStepper(rotateStepper);
+
 }
 
 void loop()
 {
+  long positions[2];
   //Calibrate
   if (state == 0) {
     while(!isAtStart()){
@@ -91,29 +87,24 @@ void loop()
     if (last!=state){
     Serial.print("On layer ");
     Serial.println(layer);}
-    linearStepper.setSpeed(linSpeed);
-    rotateStepper.setSpeed(rotSpeed);
+  //  linearStepper.setSpeed(linSpeed);
+  //  rotateStepper.setSpeed(rotSpeed);
    
     //Moves to either 0 or the numOfTurns
     if (last!=state){
     Serial.print("Linear going to ");
-    Serial.println((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));
-    }
-    while (!linearStepper.runSpeedToPosition()){
-    linearStepper.moveTo((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));}
-        if (last!=state){
-    Serial.print("Rotate going to ");
+    Serial.println(((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed))*-1);
+        Serial.print("Rotate going to ");
     Serial.println(numOfTurns*rotSpeed);
-        }
-    while (!rotateStepper.runSpeedToPosition()){
-    rotateStepper.moveTo(numOfTurns*rotSpeed);}
-    linearStepper.run();
-    rotateStepper.run();
-    if ((linearStepper.targetPosition()==linearStepper.currentPosition()) &&(rotateStepper.targetPosition()==rotateStepper.currentPosition())){
+    }
+      positions[0] = ((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed))*-1;
+  positions[1] = (numOfTurns*rotSpeed*layer);
+    steppers.moveTo(positions);
+  steppers.runSpeedToPosition();
+   
       Serial.println("Finished Layer");
       layer++;
       dir =dir*-1;
-    }
     if (layer==fullLayers) {
       Serial.println("Done ALL layers!");
       state++;
