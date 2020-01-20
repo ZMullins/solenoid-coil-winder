@@ -9,7 +9,7 @@
 //may need to be looked at
 #define linSpeed 22
 #define rotSpeed 200
-#define numberOfTurns 203
+#define numOfTurns 203
 //#define linSteps 4466
 //#define rotSteps 40600
 
@@ -40,7 +40,9 @@ AccelStepper linearStepper(forwardstep1, backwardstep1);
 AccelStepper rotateStepper(forwardstep2, backwardstep2);
 
 int dir = dirCCW;
-
+int state = 0;
+int layer=0;
+int last=-1;
 //Function checks whether the linear actuator is in start position
 boolean isAtStart() {
   //BOILER PLATE
@@ -49,23 +51,11 @@ boolean isAtStart() {
 
 //Puts the linear actuator to start position
 void calibrate() {
-  while(!isAtStart()){
-      linearStepper.setSpeed(linSpeed);
-      linearStepper.move(-1);
-      linearStepper.runSpeedToPosition();
-  }
-      linearStepper.setCurrentPosition(0);
+  
 }
 
 void windFull() {
-   linearStepper.setSpeed(linSpeed);
-   rotateStepper.setSpeed(rotSpeed);
-   //linearStepper.run();
-    //Moves to either 0 or the numOfTurns
-    while (!linearStepper.runSpeedToPosition()){
-    linearStepper.moveTo((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));}
-    while (!rotateStepper.runSpeedToPosition()){
-    rotateStepper.moveTo(numOfTurns*rotSpeed);}
+  
 }
 void setup()
 {  
@@ -87,9 +77,48 @@ void setup()
 
 void loop()
 {
-  for (int layer=1; layer<=fullLayers; layer++) {
-   windFull();
-   dir=dir*-1;
+  //Calibrate
+  if (state == 0) {
+    while(!isAtStart()){
+      linearStepper.setSpeed(linSpeed);
+      linearStepper.move(-1);
+      linearStepper.runSpeedToPosition();
+  }
+      linearStepper.setCurrentPosition(0);
+      state++;
+  }
+  if (state == 1) {
+    if (last!=state){
+    Serial.print("On layer ");
+    Serial.println(layer);}
+    linearStepper.setSpeed(linSpeed);
+    rotateStepper.setSpeed(rotSpeed);
+   
+    //Moves to either 0 or the numOfTurns
+    if (last!=state){
+    Serial.print("Linear going to ");
+    Serial.println((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));
+    }
+    while (!linearStepper.runSpeedToPosition()){
+    linearStepper.moveTo((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed));}
+        if (last!=state){
+    Serial.print("Rotate going to ");
+    Serial.println(numOfTurns*rotSpeed);
+        }
+    while (!rotateStepper.runSpeedToPosition()){
+    rotateStepper.moveTo(numOfTurns*rotSpeed);}
+    linearStepper.run();
+    rotateStepper.run();
+    if ((linearStepper.targetPosition()==linearStepper.currentPosition()) &&(rotateStepper.targetPosition()==rotateStepper.currentPosition())){
+      Serial.println("Finished Layer");
+      layer++;
+      dir =dir*-1;
+    }
+    if (layer==fullLayers) {
+      Serial.println("Done ALL layers!");
+      state++;
+    }
+    last = state;
   }
   //TODO: Part of a loop logic
 }
