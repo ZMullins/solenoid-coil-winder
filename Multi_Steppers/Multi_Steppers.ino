@@ -40,7 +40,7 @@ AccelStepper linearStepper(forwardstep1, backwardstep1);
 AccelStepper rotateStepper(forwardstep2, backwardstep2);
 MultiStepper steppers;
 
-int dir = dirCCW;
+int dir = dirCW;
 int state = 0;
 int layer=0;
 int last=-1;
@@ -59,11 +59,13 @@ void setup()
   Serial.begin(9600);
   
   //Setup Motors
-  linearStepper.setMaxSpeed(600.0);
+  linearStepper.setMaxSpeed(10000.0);
   linearStepper.setAcceleration(10000.0);
-  rotateStepper.setMaxSpeed(600.0);
+  rotateStepper.setMaxSpeed(10000.0);
   rotateStepper.setAcceleration(10000.0);
 
+linearStepper.setSpeed(linSpeed);
+rotateStepper.setSpeed(rotSpeed);
 
   steppers.addStepper(linearStepper);
   steppers.addStepper(rotateStepper);
@@ -73,6 +75,8 @@ void setup()
 void loop()
 {
   long positions[2];
+  long numOfTurns2=203;
+  long rotSpeed2=200;
   //Calibrate
   if (state == 0) {
     while(!isAtStart()){
@@ -84,24 +88,36 @@ void loop()
       state++;
   }
   if (state == 1) {
-    if (last!=state){
+    if (last!=layer){
     Serial.print("On layer ");
-    Serial.println(layer);}
-  //  linearStepper.setSpeed(linSpeed);
-  //  rotateStepper.setSpeed(rotSpeed);
-   
+    Serial.println(layer);
+          Serial.print("Direction: ");
+      Serial.println(dir);
+
+    }
+    
+       positions[0] = ((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed)/2)*-1;
+      positions[1] = (numOfTurns2*rotSpeed2+long(layer)*numOfTurns2*rotSpeed2);
     //Moves to either 0 or the numOfTurns
     if (last!=state){
     Serial.print("Linear going to ");
-    Serial.println(((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed))*-1);
-        Serial.print("Rotate going to ");
-    Serial.println(numOfTurns*rotSpeed);
+    Serial.println(positions[0]);
+    Serial.print("Rotation going to ");
+    Serial.println(positions[1]);
     }
-      positions[0] = ((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed))*-1;
-  positions[1] = (numOfTurns*rotSpeed*layer);
+    
+  
     steppers.moveTo(positions);
-  steppers.runSpeedToPosition();
-   
+    linearStepper.setSpeed(linSpeed*dir*-1);
+rotateStepper.setSpeed(rotSpeed*4.544);
+  while(steppers.run()){
+    Serial.print("    ");
+    Serial.print(linearStepper.currentPosition());
+    Serial.print("<- lin rot -> " );
+    long cur =rotateStepper.currentPosition();
+     Serial.print(cur);
+  }
+       last = layer;
       Serial.println("Finished Layer");
       layer++;
       dir =dir*-1;
@@ -109,7 +125,6 @@ void loop()
       Serial.println("Done ALL layers!");
       state++;
     }
-    last = state;
   }
   //TODO: Part of a loop logic
 }
