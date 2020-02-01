@@ -1,4 +1,4 @@
-
+rq
 #include <Wire.h>
 #include <AccelStepper.h>
 #include <Adafruit_MotorShield.h>
@@ -7,7 +7,7 @@
 #define dirCCW -1
 #define fullLayers 22
 //may need to be looked at
-#define linSpeed 22
+#define linSpeed 5
 #define rotSpeed 200
 #define numOfTurns 203
 //#define linSteps 4466
@@ -64,8 +64,8 @@ void setup()
   rotateStepper.setMaxSpeed(10000.0);
   rotateStepper.setAcceleration(10000.0);
 
-linearStepper.setSpeed(linSpeed);
-rotateStepper.setSpeed(rotSpeed);
+linearStepper.setSpeed(10000);
+rotateStepper.setSpeed(10000);
 
   steppers.addStepper(linearStepper);
   steppers.addStepper(rotateStepper);
@@ -96,7 +96,8 @@ void loop()
 
     }
     
-       positions[0] = ((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed)/2)*-1;
+       //positions[0] = ((numOfTurns*linSpeed*dir)/2+(numOfTurns*linSpeed)/2)*-1;
+       positions[0] = -4466;//((-4466*dir)/2+(-4466)/2);
       positions[1] = (numOfTurns2*rotSpeed2+long(layer)*numOfTurns2*rotSpeed2);
     //Moves to either 0 or the numOfTurns
     if (last!=state){
@@ -108,15 +109,17 @@ void loop()
     
   
     steppers.moveTo(positions);
-    linearStepper.setSpeed(linSpeed*dir*-1);
-rotateStepper.setSpeed(rotSpeed*4.544);
-  while(steppers.run()){
+    linearStepper.setSpeed(linSpeed*dir);
+rotateStepper.setSpeed(rotSpeed*10);
+//rotateStepper.setSpeed(0);
+ // while(steppers.run()){
+  steppers.runSpeedToPosition();
     Serial.print("    ");
     Serial.print(linearStepper.currentPosition());
     Serial.print("<- lin rot -> " );
     long cur =rotateStepper.currentPosition();
      Serial.print(cur);
-  }
+ // }
        last = layer;
       Serial.println("Finished Layer");
       layer++;
