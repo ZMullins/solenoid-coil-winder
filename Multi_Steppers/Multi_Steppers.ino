@@ -51,13 +51,13 @@ int last=-1;
 //NEW CODE
 double linearPitch = 8;
 //double wireDiameter = 0.28448;
-double wireDiameter = 5;
+double wireDiameter = 9.3;
 long numOfCoilsFullLayer;
 long lengthOfLayer;
 long numOfFullLayers;
 long linStepsPerLayer;
 long rotStepsPerLayer;
-long rotSpeed = 237;
+long rotSpeed = 50;
 long linSpeed;
 boolean isAtStart() {
   
@@ -152,14 +152,19 @@ void loop()
       positions[1] = (rotStepsPerLayer+long(layer)*rotStepsPerLayer);
 Serial.println("Position target linear:");
 Serial.println(positions[0]);
-
+Serial.println("Position target rotating:");
+Serial.println(positions[1]);
     steppers.moveTo(positions);
     linearStepper.setSpeed(linSpeed*dir*-1);
 
    rotateStepper.setSpeed(rotSpeed);
    
-   // rotateStepper.setSpeed(0);
-
+   //rotateStepper.setSpeed(0);
+//while (linearStepper.distanceToGo() != 0 && rotateStepper.distanceToGo() != 0){
+//steppers.run();
+Serial.println(linearStepper.currentPosition());
+Serial.println(rotateStepper.currentPosition());
+//}
     steppers.runSpeedToPosition();
       Serial.println(linearStepper.currentPosition());
       Serial.println(rotateStepper.currentPosition());
