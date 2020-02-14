@@ -51,20 +51,20 @@ int last=-1;
 //NEW CODE
 double linearPitch = 8;
 //double wireDiameter = 0.28448;
+//double wireDiameter = 0.30744;
 double wireDiameter = 9.3;
 long numOfCoilsFullLayer;
 long lengthOfLayer;
 long numOfFullLayers;
 long linStepsPerLayer;
 long rotStepsPerLayer;
-long rotSpeed = 50;
+long rotSpeed = 225;
 long linSpeed;
+float linErrorPercent = 2.96;
 boolean isAtStart() {
-  
   if (digitalRead(8)==LOW) {
     return true;
   }
-  
   Serial.println(digitalRead(8));
   return false;
 }
@@ -91,11 +91,11 @@ void setup()
   lengthOfLayer = coreCircumference*numOfCoilsFullLayer;
   numOfFullLayers=wireLength/lengthOfLayer;
 
-  linStepsPerLayer=numOfCoilsFullLayer*(wireDiameter/(linearPitch/200.0))*16.0;
+  linStepsPerLayer=numOfCoilsFullLayer*(wireDiameter/(linearPitch/200.0))*16.0+800;
   rotStepsPerLayer=numOfCoilsFullLayer*200*16.0;
 
   //rotSpeed=((double)rotStepsPerLayer/(double)linStepsPerLayer)*linSpeed;
-  linSpeed=((double)linStepsPerLayer/(double)rotStepsPerLayer)*rotSpeed+1;
+  linSpeed=((double)linStepsPerLayer/(double)rotStepsPerLayer)*rotSpeed;
   double realSpeed=((double)linStepsPerLayer/(double)rotStepsPerLayer)*rotSpeed;
   
   Serial.print("numOfCoilsFullLayer-");
@@ -147,25 +147,32 @@ void loop()
       Serial.println(dir);
       last=layer;
     }
-    
+    if (!(layer%2==0)) {
+
+      while (!isAtStart()){
+          positions[0]=-1000;
+          positions[1]=1000;
+          linearStepper.move(-1000);
+           rotateStepper.move(-1000);
+          linearStepper.setSpeed(linSpeed*dir*-1);
+          rotateStepper.setSpeed(rotSpeed);
+          steppers.run();
+      }
+    }
+    else {
       positions[0] = ((-linStepsPerLayer*dir)/2+(-linStepsPerLayer)/2);
       positions[1] = (rotStepsPerLayer+long(layer)*rotStepsPerLayer);
-Serial.println("Position target linear:");
-Serial.println(positions[0]);
-Serial.println("Position target rotating:");
-Serial.println(positions[1]);
+    Serial.println("Position target linear:");
+    Serial.println(positions[0]);
+    Serial.println("Position target rotating:");
+    Serial.println(positions[1]);
     steppers.moveTo(positions);
     linearStepper.setSpeed(linSpeed*dir*-1);
-
    rotateStepper.setSpeed(rotSpeed);
-   
-   //rotateStepper.setSpeed(0);
-//while (linearStepper.distanceToGo() != 0 && rotateStepper.distanceToGo() != 0){
-//steppers.run();
+ 
 Serial.println(linearStepper.currentPosition());
 Serial.println(rotateStepper.currentPosition());
-//}
-    steppers.runSpeedToPosition();
+    steppers.runSpeedToPosition();}
       Serial.println(linearStepper.currentPosition());
       Serial.println(rotateStepper.currentPosition());
       Serial.println("Finished Layer");
@@ -178,11 +185,11 @@ Serial.println(rotateStepper.currentPosition());
   }
       if (state == 5) {
                 Serial.println("DONE!");
-        delay(15000);
              positions[0] = ((-linStepsPerLayer*dir)/2+(-linStepsPerLayer)/2);
       positions[1] = (rotStepsPerLayer+long(layer)*rotStepsPerLayer);
             steppers.moveTo(positions);
-            linearStepper.setSpeed(linSpeed*dir*-100);
+            rotateStepper.setSpeed(-300);
+            linearStepper.setSpeed(0);
     steppers.runSpeedToPosition();
 
       }
