@@ -43,7 +43,7 @@ AccelStepper rotateStepper(forwardstep2, backwardstep2);
 MultiStepper steppers;
 
 int dir = dirCW;
-int state = 0;
+int state = -1;
 int layer=0;
 int last=-1;
 //Function checks whether the linear actuator is in start position
@@ -51,9 +51,10 @@ int last=-1;
 //NEW CODE
 double linearPitch = 8;
 //double wireDiameter = 0.28448;
+//below is da one
 double wireDiameter = 0.30744;
 //double wireDiameter = 0.30898;
-//double wireDiameter = 9;
+//double wireDiameter = 3;
 long numOfCoilsFullLayer;
 long lengthOfLayer;
 long numOfFullLayers;
@@ -62,11 +63,13 @@ long rotStepsPerLayer;
 long rotSpeed = 208;
 long linSpeed;
 float linErrorPercent = 2.402;
+  int inputNum=-1;
+  long tempSpeed=0;
 boolean isAtStart() {
   if (digitalRead(8)==LOW) {
     return true;
   }
-  Serial.println(digitalRead(8));
+  //Serial.println(digitalRead(8));
   return false;
 }
 
@@ -128,9 +131,8 @@ void setup()
 
 void loop()
 {
+  checkSerial();
     long positions[2];
-//state=5;
-
   //Calibrate
   if (state == 0) {
     while(!isAtStart()){
@@ -164,6 +166,7 @@ void loop()
       rotateStepper.moveTo(100000000);
 
         while (linearStepper.distanceToGo() != 0){
+         checkSerial();
          linearStepper.setSpeed(linSpeed*dir*-1);
          rotateStepper.setSpeed(rotSpeed);
          steppers.run();
@@ -197,6 +200,7 @@ void loop()
    // linearStepper.setSpeed(linSpeed*dir*-1);
  //  rotateStepper.setSpeed(rotSpeed);
         while (linearStepper.distanceToGo() != 0){
+                   checkSerial();
          //rotateStepper.move(-1);
          linearStepper.setSpeed(linSpeed*dir*-1);
          rotateStepper.setSpeed(rotSpeed);
@@ -229,6 +233,7 @@ void loop()
     }
   }
       if (state == 5) {
+       
                 Serial.println("DONE!");
              positions[0] = ((-linStepsPerLayer*dir)/2+(-linStepsPerLayer)/2);
       positions[1] = (rotStepsPerLayer+long(layer)*rotStepsPerLayer);
@@ -242,6 +247,44 @@ void loop()
         Serial.println("We're done here");
       }
   //TODO: Part of a loop logic
+}
+void checkSerial() {
+  if ( Serial.available() ) {
+  inputNum = Serial.parseInt();
+      Serial.read();
+    // add it to the inputString:
+    // if the incoming character is a newline, set a flag so the main loop can
+    // do something about it:
+
+
+  //it is running already
+  if (state == 1) {
+    if (inputNum == 1) {
+      rotSpeed+=5;
+      Serial.print("Rot speed adjusted: ");
+      Serial.println(rotSpeed);
+    }
+    if (inputNum == 0) {
+      rotSpeed-=5;
+      Serial.print("Rot speed adjusted: ");
+      Serial.println(rotSpeed);
+    }
+    if (inputNum == 2) {
+      rotSpeed = tempSpeed;
+    }
+    if (inputNum == 9) {
+      tempSpeed = rotSpeed;
+      rotSpeed = 0;
+    }
+    if (inputNum == 5) {
+      delay(15000);
+    }
+  }
+  else {
+    state =inputNum;
+    Serial.print("State set to: ");
+    Serial.println(state);
+  }}
 }
 
     
