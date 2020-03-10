@@ -43,7 +43,7 @@ int last = -1;
 //All measurements in mm
 int wireLength = 84184;
 int coreDiameter = 6;
-int coreLength = 38;
+double coreLength = 38.35;
 double linearPitch = 8;
 double wireDiameter = 0.19812;
 long numOfCoilsFullLayer;
@@ -240,7 +240,7 @@ void loop()
     positions[0] = ((-linStepsPerLayer * dir) / 2 + (-linStepsPerLayer) / 2);
     positions[1] = (rotStepsPerLayer + long(layer) * rotStepsPerLayer);
     steppers.moveTo(positions);
-    rotateStepper.setSpeed(-300);
+    rotateStepper.setSpeed(-1000);
     linearStepper.setSpeed(000);
     steppers.runSpeedToPosition();
   }
