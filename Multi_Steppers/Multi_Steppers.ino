@@ -42,20 +42,20 @@ int last = -1;
 //Parameters of Magnetorquer
 //All measurements in mm
 int wireLength = 84184;
-int coreDiameter = 6;
-double coreLength = 38.35;
+int coreDiameter = 6.35;
+double coreLength = 36.16;
 double linearPitch = 8;
 double wireDiameter = 0.19812;
 long numOfCoilsFullLayer;
 long lengthOfLayer;
-long numOfFullLayers;
+long numOfFullLayers=19;
 long linStepsPerLayer;
 long rotStepsPerLayer;
 //Rotspeed is configured,
-long rotSpeed = 235;
+long rotSpeed = 242;
 long linSpeed;
 //Percent Error is a speed increase % for the rotational stepper
-float linErrorPercent = 2.402;
+float linErrorPercent = 0;
 //The Serial Input is stored here
 int inputNum = -1;
 //When system is stopped, this will track the previous speed
@@ -64,7 +64,7 @@ long tempSpeed = 0;
 //This is the homing function used to check in linear actuator is in the start position
 boolean isAtStart() {
   if (digitalRead(8) == LOW) {
-    return true;
+   return true;
   }
   return false;
 }
@@ -89,15 +89,17 @@ void setup()
   numOfCoilsFullLayer = coreLength / wireDiameter;
   double coreCircumference = coreDiameter * 3.14159;
   lengthOfLayer = coreCircumference * numOfCoilsFullLayer;
-  numOfFullLayers = wireLength / lengthOfLayer;
+  //numOfFullLayers = wireLength / lengthOfLayer;
 
   linStepsPerLayer = numOfCoilsFullLayer * (wireDiameter / (linearPitch / 200.0)) * 16.0;
   rotStepsPerLayer = numOfCoilsFullLayer * 200 * 16.0;
 
   //Rotational speed is user set, linear is calculated as a proportion of this
-  linSpeed = ((double)linStepsPerLayer / (double)rotStepsPerLayer) * rotSpeed + 1;
+  double realSpeed = ((double)linStepsPerLayer / (double)rotStepsPerLayer) * rotSpeed;
+  linSpeed = ((double)linStepsPerLayer / (double)rotStepsPerLayer) * rotSpeed+1;
   rotSpeed = rotSpeed + (rotSpeed * linErrorPercent / 100);
-
+  double realRotSpeed = (double)0.87827*rotSpeed;
+  rotSpeed = realRotSpeed*0.994;
   //Output initial conditions
   Serial.print("numOfCoilsFullLayer-");
   Serial.println(numOfCoilsFullLayer);
@@ -116,6 +118,7 @@ void setup()
 
   Serial.print(" linSpeed-");
   Serial.println(linSpeed);
+  Serial.println(realSpeed);
   Serial.print(" rotSpeed-");
   Serial.println(rotSpeed);
 
@@ -132,6 +135,11 @@ void loop()
   long positions[2];
   //Calibrate the linear stepper to be in the home position
   if (state == 0) {
+   /* while (true) {
+      linearStepper.move(-1);
+      linearStepper.setSpeed(-linSpeed * 20);
+      linearStepper.runSpeedToPosition();
+    }*/
     while (!isAtStart()) {
       linearStepper.move(-1);
       linearStepper.setSpeed(linSpeed * 20);
@@ -141,7 +149,7 @@ void loop()
     linearStepper.setCurrentPosition(0);
     linearStepper.moveTo(400);
     while (linearStepper.distanceToGo() != 0) {
-      linearStepper.setSpeed(linSpeed * dir * 5);
+      linearStepper.setSpeed(linSpeed * dir * 20);
       rotateStepper.setSpeed(0);
       steppers.run();
     }
@@ -186,6 +194,7 @@ void loop()
 
       //Move further past to create tension
       linearStepper.moveTo(800);
+      Serial.println("MOVING PAST");
       while (linearStepper.distanceToGo() != 0) {
         linearStepper.setSpeed(linSpeed * dir * -5);
         rotateStepper.setSpeed(0);
@@ -217,6 +226,7 @@ void loop()
       Serial.println(rotateStepper.currentPosition());
       //Move past target position to create tension
       linearStepper.moveTo(positions[0] - 800);
+      Serial.println("MOVING PAST");
       while (linearStepper.distanceToGo() != 0) {
         linearStepper.setSpeed(linSpeed * dir * -5);
         rotateStepper.setSpeed(0);
@@ -240,7 +250,7 @@ void loop()
     positions[0] = ((-linStepsPerLayer * dir) / 2 + (-linStepsPerLayer) / 2);
     positions[1] = (rotStepsPerLayer + long(layer) * rotStepsPerLayer);
     steppers.moveTo(positions);
-    rotateStepper.setSpeed(-1000);
+    rotateStepper.setSpeed(-10000);
     linearStepper.setSpeed(000);
     steppers.runSpeedToPosition();
   }
@@ -260,12 +270,12 @@ void checkSerial() {
 
     if (state == 1) {
       if (inputNum == 1) {
-        rotSpeed += 5;
+        rotSpeed += 1;
         Serial.print("Rot speed adjusted: ");
         Serial.println(rotSpeed);
       }
       if (inputNum == 0) {
-        rotSpeed -= 5;
+        rotSpeed -= 1;
         Serial.print("Rot speed adjusted: ");
         Serial.println(rotSpeed);
       }
@@ -273,17 +283,16 @@ void checkSerial() {
         rotSpeed = tempSpeed;
       }
       if (inputNum == 9) {
-        tempSpeed = rotSpeed;
+         tempSpeed = rotSpeed;
         rotSpeed = 0;
       }
       if (inputNum == 5) {
         delay(15000);
       }
     }
-    else {
+      else{
       state = inputNum;
       Serial.print("State set to: ");
-      Serial.println(state);
+      Serial.println(state);}
     }
   }
-}
