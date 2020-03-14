@@ -43,19 +43,20 @@ int last = -1;
 //All measurements in mm
 int wireLength = 84184;
 int coreDiameter = 6.35;
-double coreLength = 36.16;
+double coreLength = 37.70;
 double linearPitch = 8;
-double wireDiameter = 0.19812;
+double wireDiameter = 0.24892;
+//double wireDiameter = 0.30744;
 long numOfCoilsFullLayer;
 long lengthOfLayer;
-long numOfFullLayers=19;
+long numOfFullLayers=25;
 long linStepsPerLayer;
 long rotStepsPerLayer;
 //Rotspeed is configured,
-long rotSpeed = 242;
+long rotSpeed = 225;
 long linSpeed;
 //Percent Error is a speed increase % for the rotational stepper
-float linErrorPercent = 0;
+float linErrorPercent = 2.402;
 //The Serial Input is stored here
 int inputNum = -1;
 //When system is stopped, this will track the previous speed
@@ -98,8 +99,8 @@ void setup()
   double realSpeed = ((double)linStepsPerLayer / (double)rotStepsPerLayer) * rotSpeed;
   linSpeed = ((double)linStepsPerLayer / (double)rotStepsPerLayer) * rotSpeed+1;
   rotSpeed = rotSpeed + (rotSpeed * linErrorPercent / 100);
-  double realRotSpeed = (double)0.87827*rotSpeed;
-  rotSpeed = realRotSpeed*0.994;
+  //double realRotSpeed = (double)0.87827*rotSpeed;
+  rotSpeed = rotSpeed;
   //Output initial conditions
   Serial.print("numOfCoilsFullLayer-");
   Serial.println(numOfCoilsFullLayer);
