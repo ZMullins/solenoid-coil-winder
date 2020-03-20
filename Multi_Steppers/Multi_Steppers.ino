@@ -43,7 +43,7 @@ int last = -1;
 //All measurements in mm
 int wireLength = 84184;
 int coreDiameter = 6.35;
-double coreLength = 37.70;
+double coreLength = 38;
 double linearPitch = 8;
 double wireDiameter = 0.24892;
 //double wireDiameter = 0.30744;
